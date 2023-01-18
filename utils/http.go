@@ -38,9 +38,11 @@ func GetQueryParams(r *http.Request) map[string]string {
 	return queryParams
 }
 
-// SuccessResponse - This function writes a success response to the response writer
-func SuccessResponse(w http.ResponseWriter, status int, data []byte) {
-	w.WriteHeader(status)
+// Response - This function writes a success response to the response writer
+func Response(w http.ResponseWriter, status int, data []byte, message string) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	w.WriteHeader(status)
+	if data != nil {
+		w.Write(data)
+	}
 }

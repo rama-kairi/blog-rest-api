@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -30,17 +29,16 @@ func (t BlogStore) GetAllBlogs(w http.ResponseWriter, r *http.Request) {
 	t.loadFromJson()
 	// Check if the method is GET
 	if !utils.CheckMethod(r.Method, utils.GET) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
+		utils.Response(w, http.StatusMethodNotAllowed, nil, "Method not allowed")
 	}
 	// Marshal t.Blogs into json
 	blogs, err := json.Marshal(t.Blogs)
 	if err != nil {
-		log.Fatal(err)
+		utils.Response(w, http.StatusBadRequest, nil, "Error marshalling blogs")
 	}
 
 	// Write the json to the response
-	utils.SuccessResponse(w, http.StatusOK, blogs)
+	utils.Response(w, http.StatusOK, blogs, "Blogs found")
 }
 
 // Get a blog
@@ -48,15 +46,14 @@ func (t BlogStore) GetBlog(w http.ResponseWriter, r *http.Request) {
 	t.loadFromJson()
 	// Check if the method is GET
 	if !utils.CheckMethod(r.Method, utils.GET) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		utils.Response(w, http.StatusMethodNotAllowed, nil, "Method not allowed")
 		return
 	}
 
 	// Get blog id from url
 	id, err := utils.GetUrlParamId(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Invalid blog id")
+		utils.Response(w, http.StatusBadRequest, nil, "Error getting blog id")
 		return
 	}
 
@@ -66,13 +63,11 @@ func (t BlogStore) GetBlog(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			utils.SuccessResponse(w, http.StatusOK, blogJson)
+			utils.Response(w, http.StatusOK, blogJson, "Blog found")
 			return
 		}
 	}
-
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, "Blog not found")
+	utils.Response(w, http.StatusNotFound, nil, "Blog not found")
 }
 
 // Create a blog
@@ -80,7 +75,7 @@ func (t BlogStore) CreateBlog(w http.ResponseWriter, r *http.Request) {
 	t.loadFromJson()
 	// Check if the method is Post
 	if !utils.CheckMethod(r.Method, utils.POST) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		utils.Response(w, http.StatusMethodNotAllowed, nil, "Method not allowed")
 		return
 	}
 
@@ -88,7 +83,7 @@ func (t BlogStore) CreateBlog(w http.ResponseWriter, r *http.Request) {
 	// Decode the request body into the struct.
 	err := json.NewDecoder(r.Body).Decode(&blog)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		utils.Response(w, http.StatusBadRequest, nil, "Error decoding blog")
 		return
 	}
 	blog.Id = t.newTodoId()
@@ -104,7 +99,7 @@ func (t BlogStore) CreateBlog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Marshal the blog into json
-	utils.SuccessResponse(w, http.StatusCreated, data)
+	utils.Response(w, http.StatusCreated, data, "Blog created successfully")
 }
 
 // Delete a blog
@@ -112,7 +107,7 @@ func (t BlogStore) DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	t.loadFromJson()
 	// Check if the method is Delete
 	if !utils.CheckMethod(r.Method, utils.DELETE) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		utils.Response(w, http.StatusMethodNotAllowed, nil, "Method not allowed")
 		return
 	}
 
@@ -127,14 +122,14 @@ func (t BlogStore) DeleteBlog(w http.ResponseWriter, r *http.Request) {
 		if blog.Id == id {
 			t.Blogs = append(t.Blogs[:i], t.Blogs[i+1:]...)
 			t.saveToJson()
-			w.WriteHeader(http.StatusNoContent)
+			utils.Response(w, http.StatusNoContent, nil, "Blog deleted successfully")
 			return
 		}
 	}
+
 	// Save the blogs to the json file
 	t.saveToJson()
 
 	// If the blog is not found, return 404
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, "Blog not found")
+	utils.Response(w, http.StatusNotFound, nil, "Blog not found")
 }
